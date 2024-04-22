@@ -5,12 +5,17 @@ import ru.bstu.dss.dto.DisplacedIdealDto;
 import ru.bstu.dss.model.Alternative;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class DisplacedIdealMethodSolver {
 
-    public void run(DisplacedIdealDto data) {
+    private final static int P = 5;
+    private final int[] pValues = {1, 2, 3, 4, 5};
+
+    public String run(DisplacedIdealDto data) {
         var result = data.getAlternatives();
 
         while (result.size() != 1) {
@@ -19,9 +24,106 @@ public class DisplacedIdealMethodSolver {
             double[][] relative = getRelativeUnits(result, ideal, imperfect);
             double[][] normalized = getNormalizedMatrix(relative);
             double[] entropyMatrix = getEntropy(normalized);
-            double[] invertEntopyMatrix = getInvertEntropy(entropyMatrix);
-
+            double[] invertEntropyMatrix = getInvertEntropy(entropyMatrix);
+            double[] complexImportance = getComplexImportance(invertEntropyMatrix, getNormalizedAssessment(data.getCriteriaSet().getImportance()));
+            double[][] distanceMatrix = getDistanceMatrix(relative, complexImportance);
+            int worse = getWorse(distanceMatrix);
+            deleteAlternative(result,worse);
         }
+
+        return result.get(0).getName();
+    }
+
+    private void deleteAlternative(List<Alternative> alternatives, int worse){
+        alternatives.remove(worse);
+    }
+
+    private int findMostFrequentNumber(int[] numbers) {
+        // Создаем HashMap для хранения чисел и их частоты
+        Map<Integer, Integer> frequencyMap = new HashMap<>();
+
+        // Заполняем HashMap и считаем частоту встречаемости
+        for (int num : numbers) {
+            frequencyMap.put(num, frequencyMap.getOrDefault(num, 0) + 1);
+        }
+
+        // Находим число с максимальной частотой
+        int maxFrequency = 0;
+        int mostFrequentNumber = 0;
+        for (Map.Entry<Integer, Integer> entry : frequencyMap.entrySet()) {
+            if (entry.getValue() > maxFrequency) {
+                maxFrequency = entry.getValue();
+                mostFrequentNumber = entry.getKey();
+            }
+        }
+
+        return mostFrequentNumber;
+    }
+
+    private int getWorse(double[][] matrix){
+        int[] countArray = new int[P];
+
+        for (int i = 0; i < P; i++){
+            countArray[i] = 0;
+            double currentMin = Double.MAX_VALUE;
+            for (int j = 0; j < matrix.length; j++){
+                if (matrix[j][i] < currentMin){
+                    currentMin = matrix[j][i];
+                    countArray[i] = j;
+                }
+            }
+        }
+        return findMostFrequentNumber(countArray);
+    }
+
+    private double[][] getDistanceMatrix(double[][] relative, double[] importance) {
+        int n = relative.length; // Количество объектов
+        int m = relative[0].length; // Количество характеристик (расстояний)
+
+        double[][] distances = new double[n][P]; // Матрица расстояний
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < P; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < m; k++) {
+                    sum += importance[k] * Math.pow(1 - relative[i][k], pValues[j]); // Формула с показателем p=2
+                }
+                distances[i][j] = Math.pow(sum, 1.0 / pValues[j]); // Применение корня к сумме
+            }
+        }
+
+        return distances;
+    }
+
+    private double[] getNormalizedAssessment(List<Double> assessments){
+        double sum = 0;
+        double[] result = new double[assessments.size()];
+
+        for(var assessment : assessments){
+            sum += assessment;
+        }
+
+        for(var i = 0; i < assessments.size(); i++){
+            result[i] = (assessments.get(i) / sum);
+        }
+
+        return  result;
+    }
+
+    private double[] getComplexImportance(double[] variability, double[] assessments){
+        int size = variability.length;
+        double[] result = new double[size];
+        double sum = 0;
+
+        for (int i = 0; i < size; i++) {
+            sum += variability[i] * assessments[i];
+        }
+
+        for (int i = 0; i < size; i++) {
+            result[i] = (variability[i] * assessments[i])/(sum);
+        }
+
+        return result;
     }
 
     private  double[] getInvertEntropy(double[] entropy){
@@ -32,38 +134,63 @@ public class DisplacedIdealMethodSolver {
         return result;
     }
 
-    private double[] getEntropy(double[][] normalized){
-        int rowSize = normalized.length;
-        int columnSize = normalized[0].length;
-        double[] result = new double[columnSize];
-        double k = 1 / Math.log(rowSize);
+//    private double[] getEntropy(double[][] normalized){
+//        int rowSize = normalized.length;
+//        int columnSize = normalized[0].length;
+//        double[] result = new double[columnSize];
+//        double k = 1 / Math.log(rowSize);
+//
+//        for (int j = 0; j < columnSize; j++) {
+//            double sum = 0;
+//            for (int i = 0; i < rowSize; i++) {
+//                sum += normalized[i][j] * Math.log(normalized[i][j]);
+//            }
+//            result[j] = -k * sum;
+//        }
+//
+//        return result;
+//    }
 
-        for (int j = 0; j < columnSize; j++) {
-            double sum = 0;
-            for (int i = 0; i < rowSize; i++) {
-                sum += normalized[i][j] * Math.log(normalized[i][j]);
+    private double[] getEntropy(double[][] normalized) {
+        int m = normalized[0].length; // Количество критериев
+        int n = normalized.length;    // Количество альтернатив
+
+        double k = 1.0 / Math.log(n); // Вычисляем k
+
+        double[] entropy = new double[m]; // Массив для хранения значений энтропии
+
+        for (int j = 0; j < m; j++) {
+            double sum = 0.0;
+            for (int i = 0; i < n; i++) {
+                double pij = normalized[i][j];
+                if (pij > 0) { // Проверяем, что pij не равно нулю для избежания ошибки логарифма
+                    sum += pij * Math.log(pij);
+                }
             }
-            result[j] = -k * sum;
+            entropy[j] = -k * sum; // Вычисляем энтропию для каждого критерия j
         }
 
-        return result;
+        return entropy;
     }
 
     private double[][] getNormalizedMatrix(double[][] relative) {
-        int rowSize = relative.length;
-        int columnSize = relative[0].length;
-        double[][] result = new double[columnSize][rowSize];
+        int n = relative.length;
+        int m = relative[0].length;
+        double[][] result = new double[n][m];
 
-        for (int i = 0; i < columnSize; i++) {
-            double sum = sumColumn(relative, i);
+        double[] sumValues = new double[m];
+        for (int j = 0; j < m; j++) {
+            double sum = 0.0;
+            for (int i = 0; i < n; i++) {
+                sum += relative[i][j];
+            }
+            sumValues[j] = sum;
+        }
 
-            for (int j = 0; j < rowSize; j++) {
-                if (sum != 0) {
-                    result[i][j] = relative[i][j] / sum;
-                }
-                else {
-                    result[i][j] = 0;
-                }
+        // Вычисляем значения P_ij
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                result[i][j] = relative[i][j] / sumValues[j];
             }
         }
 

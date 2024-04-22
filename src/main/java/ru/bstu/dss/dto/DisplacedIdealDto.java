@@ -16,7 +16,7 @@ import java.util.List;
 //@AllArgsConstructor
 //@NoArgsConstructor
 public class DisplacedIdealDto {
-    private final CriteriaSet criteriaSet;
+    private CriteriaSet criteriaSet;
     private List<Alternative> alternatives;
 
 }

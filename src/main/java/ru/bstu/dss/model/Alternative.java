@@ -6,6 +6,6 @@ import java.util.List;
 
 @Data
 public class Alternative {
-    String name;
-    List<Double> criteriaValuesList;
+    private String name;
+    private List<Double> criteriaValuesList;
 }
