@@ -12,8 +12,26 @@ import java.util.Map;
 @Component
 public class DisplacedIdealMethodSolver {
 
-    private final static int P = 5;
+    private final int P = 5;
     private final int[] pValues = {1, 2, 3, 4, 5};
+
+    public String run23(DisplacedIdealDto data) {
+        var result = data.getAlternatives();
+
+        while (result.size() != 1) {
+            List<Double> ideal = getIdealObject(data);
+            List<Double> imperfect = getImperfectObject(data);
+            double[][] relative = getRelativeUnits(result, ideal, imperfect);
+            double[][] normalized = getNormalizedMatrix(relative);
+            double[] entropyMatrix = getEntropy(normalized);
+            double[] invertEntropyMatrix = getInvertEntropy(entropyMatrix);
+            double[] complexImportance = getComplexImportance(invertEntropyMatrix, getNormalizedAssessment(data.getCriteriaSet().getImportance()));
+
+        }
+
+        return result.get(0).getName();
+    }
+
 
     public String run(DisplacedIdealDto data) {
         var result = data.getAlternatives();
@@ -134,23 +152,6 @@ public class DisplacedIdealMethodSolver {
         return result;
     }
 
-//    private double[] getEntropy(double[][] normalized){
-//        int rowSize = normalized.length;
-//        int columnSize = normalized[0].length;
-//        double[] result = new double[columnSize];
-//        double k = 1 / Math.log(rowSize);
-//
-//        for (int j = 0; j < columnSize; j++) {
-//            double sum = 0;
-//            for (int i = 0; i < rowSize; i++) {
-//                sum += normalized[i][j] * Math.log(normalized[i][j]);
-//            }
-//            result[j] = -k * sum;
-//        }
-//
-//        return result;
-//    }
-
     private double[] getEntropy(double[][] normalized) {
         int m = normalized[0].length; // Количество критериев
         int n = normalized.length;    // Количество альтернатив
@@ -195,16 +196,6 @@ public class DisplacedIdealMethodSolver {
         }
 
         return result;
-    }
-
-    private double sumColumn(double[][] matrix, int index) {
-        double sum = 0;
-
-        for (int i = 0; i < matrix.length; i++) {
-            sum += matrix[i][index];
-        }
-
-        return sum;
     }
 
     private double[][] getRelativeUnits(List<Alternative> alternatives, List<Double> ideal, List<Double> imperfect) {
