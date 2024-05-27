@@ -1,7 +1,7 @@
 package ru.bstu.dss.method;
 
 import org.springframework.stereotype.Component;
-import ru.bstu.dss.dto.DisplacedIdealDto;
+import ru.bstu.dss.dto.inputDataDto;
 import ru.bstu.dss.model.Alternative;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class DisplacedIdealMethodSolver {
     private final int P = 5;
     private final int[] pValues = {1, 2, 3, 4, 5};
 
-    public String run23(DisplacedIdealDto data) {
+    public String run23(inputDataDto data) {
         var result = data.getAlternatives();
 
         while (result.size() != 1) {
@@ -33,7 +33,7 @@ public class DisplacedIdealMethodSolver {
     }
 
 
-    public String run(DisplacedIdealDto data) {
+    public String run(inputDataDto data) {
         var result = data.getAlternatives();
 
         while (result.size() != 1) {
@@ -230,7 +230,7 @@ public class DisplacedIdealMethodSolver {
         return matrix;
     }
 
-    private List<Double> getIdealObject(DisplacedIdealDto data) {
+    private List<Double> getIdealObject(inputDataDto data) {
         var criteriaSet = data.getCriteriaSet();
         var usefulness = criteriaSet.getUsefulness();
         var alternatives = data.getAlternatives();
@@ -252,7 +252,7 @@ public class DisplacedIdealMethodSolver {
     }
 
 
-    private List<Double> getImperfectObject(DisplacedIdealDto data) {
+    private List<Double> getImperfectObject(inputDataDto data) {
         var criteriaSet = data.getCriteriaSet();
         var usefulness = criteriaSet.getUsefulness();
         var alternatives = data.getAlternatives();

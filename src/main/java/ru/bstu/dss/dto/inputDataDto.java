@@ -1,8 +1,6 @@
 package ru.bstu.dss.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import ru.bstu.dss.model.Alternative;
@@ -15,7 +13,7 @@ import java.util.List;
 @Setter
 //@AllArgsConstructor
 //@NoArgsConstructor
-public class DisplacedIdealDto {
+public class inputDataDto {
     private CriteriaSet criteriaSet;
     private List<Alternative> alternatives;
 
